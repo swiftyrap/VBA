@@ -1,0 +1,21 @@
+Sub test()
+marker = 0
+Set objShell = CreateObject("Shell.Application")
+IE_count = objShell.Windows.Count
+For x = 0 To (IE_count - 1)    
+On Error Resume Next    ' sometimes more web pages are counted than are open    
+my_url = objShell.Windows(x).document.Location    
+my_title = objShell.Windows(x).document.Title
+If my_title Like "abc" & "*" Then 'compare to find if the desired web page is already open        
+Set ie = objShell.Windows(x)        
+marker = 1        
+Exit For    
+Else    
+End If
+Next
+If marker = 0 Then    
+MsgBox ("A matching webpage was NOT found")
+Else    
+MsgBox ("A matching webpage was found")End If
+ie.document.getelementsbyclassname("login-link btn")(0).Click
+End Sub
