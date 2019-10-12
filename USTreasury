@@ -1,0 +1,96 @@
+Public Declare PtrSafe Sub Sleep Lib "kernel32" (ByVal dwMilliseconds As Long)
+Sub usBondScrape()
+
+Dim objIE As Object
+Dim urlString As String
+Dim htmlDoc As HTMLDocument
+
+With Sheets("main")
+
+If .Range("a1048576").End(xlUp).Row <> 1 Then
+    .Range("a2:m" & .Range("a1048576").End(xlUp).Row).ClearContents
+End If
+
+.Range("r1").ClearContents
+
+End With
+
+
+Application.ScreenUpdating = False
+Application.Calculation = xlCalculationManual
+
+
+Set objIE = New InternetExplorer
+urlString = "https://www.treasury.gov/resource-center/data-chart-center/interest-rates/pages/TextView.aspx?data=yieldYear&year=2019"
+
+objIE.Navigate urlString
+objIE.Visible = 0
+Do Until objIE.ReadyState = 4
+DoEvents
+Loop
+Set htmlDoc = objIE.Document
+
+With Sheets("main")
+
+Dim x As Long
+Dim y As Long
+Dim i As Long
+Dim j As Long
+Dim z As Long
+
+Set yearCrt = htmlDoc.getElementById("interestRateTimePeriod")
+yC = yearCrt.Children.Length
+
+y = 2
+For z = 1 To yC - 2
+
+    htmlDoc.getElementById("interestRateTimePeriod").Children(z).Selected = True
+    Call htmlDoc.parentWindow.execScript("option('interestRateTimePeriod')", "JavaScript")
+    Sleep (5000)
+    Do While objIE.Busy = True And objIE.ReadyState <> 4
+    DoEvents
+    Sleep (10)
+    Loop
+    
+Set tTableCrt = htmlDoc.getElementsByClassName("t-chart")(0).Children(0)
+Set tTableTdCrt = htmlDoc.getElementsByClassName("t-chart")(0).Children(0).Children(0)
+
+
+tC = tTableCrt.Children.Length
+tdC = tTableTdCrt.Children.Length
+
+
+For i = 2 To tC
+
+    x = 1
+
+    For j = 1 To tdC
+        .Cells(y, x) = htmlDoc.getElementsByClassName("t-chart")(0).Children(0).Children(i - 1).Children(j - 1).innerText
+        x = x + 1
+    Next j
+
+    y = y + 1
+
+Next i
+Next z
+.Range("r1") = htmlDoc.getElementsByClassName("updated")(0).innerText
+
+End With
+
+MsgBox ("Completed.")
+
+
+Set htmlDoc = Nothing
+objIE.Quit
+Set objIE = Nothing
+  
+
+Application.ScreenUpdating = True
+Application.Calculation = xlAutomatic
+
+
+Set objIE = Nothing
+Set htmlDoc = Nothing
+
+
+End Sub
